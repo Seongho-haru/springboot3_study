@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,6 +19,20 @@ public class CommentService {
 
     @Autowired
     private ArticleRepository articleRepository;
+
+    @Transactional
+    public CommentDto update(Long id, CommentDto dto) {
+        //1. 댓글 조회 및 예외 발생
+        Comment target = commentRepository.findById(id)
+                .orElseThrow(()-> new IllegalArgumentException("댓글 수정 실패!" +
+                        "대상 댓글이 없습니다."));
+        //2. 댓글 수정
+        target.patch(dto);
+        //3. DB 갱신
+        Comment updated = commentRepository.save(target);
+        //4. 댓글 엔티티르 DTO로 변환 및 반환
+        return CommentDto.createCommentDto(updated);
+    }
 
     public List<CommentDto> comments(Long articleId) {
 //        // 1. 댓글 조회
@@ -49,5 +62,16 @@ public class CommentService {
         Comment createdComment = commentRepository.save(comment);
         //4. DTO로 반환해 반환
         return CommentDto.createCommentDto(createdComment);
+    }
+
+    @Transactional
+    public CommentDto delete(Long id) {
+        //1. 댓글 조회 및 예외 발생
+        Comment target = commentRepository.findById(id)
+                .orElseThrow(()-> new IllegalArgumentException("댓글 삭제 실패! 대상이 없습니다."));
+        //2. 댓글 삭제
+        commentRepository.delete(target);
+        // 삭제 댓글을 DTO로 변환 및 반환
+        return CommentDto.createCommentDto(target);
     }
 }
